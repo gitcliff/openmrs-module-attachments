@@ -13,6 +13,7 @@ import org.openmrs.Person;
 import org.openmrs.Visit;
 import org.openmrs.api.APIException;
 import org.openmrs.module.attachments.obs.Attachment;
+import org.openmrs.module.attachments.obs.ComplexDataHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.util.CollectionUtils;
@@ -26,6 +27,10 @@ public class AttachmentsServiceImpl implements AttachmentsService {
 	@Autowired
 	@Qualifier(AttachmentsConstants.COMPONENT_ATT_CONTEXT)
 	private AttachmentsContext ctx;
+	
+	@Autowired
+	@Qualifier(AttachmentsConstants.COMPONENT_COMPLEXDATA_HELPER)
+	private ComplexDataHelper complexDataHelper;
 	
 	@Override
 	public List<Attachment> getAttachments(Patient patient, boolean includeEncounterless, boolean includeVoided) {
@@ -41,10 +46,12 @@ public class AttachmentsServiceImpl implements AttachmentsService {
 			if (!obs.isComplex()) {
 				throw new APIException(NON_COMPLEX_OBS_ERR);
 			}
-			if (includeEncounterless) {
+			if (!includeEncounterless && obs.getEncounter() == null)
+				continue;
+			if (obs.getComplexData() == null) {
 				attachments.add(new Attachment(obs));
-			} else if (obs.getEncounter() != null) {
-				attachments.add(new Attachment(obs));
+			} else {
+				attachments.add(new Attachment(obs, complexDataHelper));
 			}
 		}
 		return attachments;
@@ -70,7 +77,11 @@ public class AttachmentsServiceImpl implements AttachmentsService {
 				throw new APIException(NON_COMPLEX_OBS_ERR);
 			}
 			if (obs.getEncounter() == null) {
-				attachments.add(new Attachment(obs));
+				if (obs.getComplexData() == null) {
+					attachments.add(new Attachment(obs));
+				} else {
+					attachments.add(new Attachment(obs, complexDataHelper));
+				}
 			}
 		}
 		return attachments;
@@ -92,7 +103,11 @@ public class AttachmentsServiceImpl implements AttachmentsService {
 			if (!obs.isComplex()) {
 				throw new APIException(NON_COMPLEX_OBS_ERR);
 			}
-			attachments.add(new Attachment(obs));
+			if (obs.getComplexData() == null) {
+				attachments.add(new Attachment(obs));
+			} else {
+				attachments.add(new Attachment(obs, complexDataHelper));
+			}
 		}
 		return attachments;
 	}

@@ -7,6 +7,8 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.Random;
 
 import javax.servlet.http.HttpServletRequest;
@@ -387,6 +389,18 @@ public class AttachmentRestController1_10Test extends MainResourceControllerTest
 		Assert.assertEquals(downloadResponse.getHeader("File-Name"), fileName);
 		Assert.assertEquals(downloadResponse.getHeader("File-Ext"), fileExtension);
 		
+	}
+	
+	@Test
+	public void doSearch() throws Exception {
+		Patient patient = Context.getPatientService().getPatient(2);
+		MockHttpServletRequest request = request(RequestMethod.GET, getURI());
+		request.addParameter("patient", patient.getUuid());
+		SimpleObject response = deserialize(handle(request));
+		LinkedHashMap<String, String> result = (LinkedHashMap<String, String>) ((ArrayList<LinkedHashMap>) response
+		        .get("results")).get(0);
+		Assert.assertEquals("application/octet-stream", result.get("bytesMimeType"));
+		Assert.assertEquals(ContentFamily.OTHER.toString(), result.get("bytesContentFamily"));
 	}
 	
 }
