@@ -6,14 +6,12 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.Random;
 
 import javax.imageio.ImageIO;
@@ -21,7 +19,6 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.io.IOUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -371,7 +368,7 @@ public class AttachmentRestController1_10Test extends MainResourceControllerTest
 		Assert.assertArrayEquals(bytesIn, bytesOut);
 		Assert.assertNull(obs.getEncounter());
 	}
-
+	
 	@Test(expected = IllegalRequestException.class)
 	public void postAttachment_shouldThrowWhenVisitAndEncounterDoNotMatch() throws Exception {
 		// Setup.
@@ -450,6 +447,18 @@ public class AttachmentRestController1_10Test extends MainResourceControllerTest
 		Assert.assertEquals(downloadResponse.getHeader("File-Name"), fileName);
 		Assert.assertEquals(downloadResponse.getHeader("File-Ext"), fileExtension);
 		
+	}
+	
+	@Test
+	public void doSearch() throws Exception {
+		Patient patient = Context.getPatientService().getPatient(2);
+		MockHttpServletRequest request = request(RequestMethod.GET, getURI());
+		request.addParameter("patient", patient.getUuid());
+		SimpleObject response = deserialize(handle(request));
+		LinkedHashMap<String, String> result = (LinkedHashMap<String, String>) ((ArrayList<LinkedHashMap>) response
+		        .get("results")).get(0);
+		Assert.assertEquals("application/octet-stream", result.get("bytesMimeType"));
+		Assert.assertEquals(ContentFamily.OTHER.toString(), result.get("bytesContentFamily"));
 	}
 	
 }
