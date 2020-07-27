@@ -48,11 +48,8 @@ public class AttachmentsServiceImpl implements AttachmentsService {
 			}
 			if (!includeEncounterless && obs.getEncounter() == null)
 				continue;
-			if (obs.getComplexData() == null) {
-				attachments.add(new Attachment(obs));
-			} else {
-				attachments.add(new Attachment(obs, complexDataHelper));
-			}
+			obs = getObs(obs);
+			attachments.add(new Attachment(obs, complexDataHelper));
 		}
 		return attachments;
 	}
@@ -77,11 +74,8 @@ public class AttachmentsServiceImpl implements AttachmentsService {
 				throw new APIException(NON_COMPLEX_OBS_ERR);
 			}
 			if (obs.getEncounter() == null) {
-				if (obs.getComplexData() == null) {
-					attachments.add(new Attachment(obs));
-				} else {
-					attachments.add(new Attachment(obs, complexDataHelper));
-				}
+				obs = getObs(obs);
+				attachments.add(new Attachment(obs, complexDataHelper));
 			}
 		}
 		return attachments;
@@ -103,11 +97,8 @@ public class AttachmentsServiceImpl implements AttachmentsService {
 			if (!obs.isComplex()) {
 				throw new APIException(NON_COMPLEX_OBS_ERR);
 			}
-			if (obs.getComplexData() == null) {
-				attachments.add(new Attachment(obs));
-			} else {
-				attachments.add(new Attachment(obs, complexDataHelper));
-			}
+			obs = getObs(obs);
+			attachments.add(new Attachment(obs, complexDataHelper));
 		}
 		return attachments;
 	}
@@ -142,5 +133,13 @@ public class AttachmentsServiceImpl implements AttachmentsService {
 			log.warn("No concepts complex are configured to fetch attachments.");
 		}
 		return questionConcepts;
+	}
+	
+	private Obs getObs(Obs obs) {
+		if (obs.getComplexData() != null) {
+			return obs;
+		}
+		String view = ctx.getComplexViewHelper().getView(obs, AttachmentsConstants.ATT_VIEW_THUMBNAIL);
+		return ctx.getObsService().getComplexObs(obs.getId(), view);
 	}
 }
